@@ -20,10 +20,7 @@ export const login = async (
         .status(404)
         .json({ message: "Provided Details Are Not Matching", success: false });
     }
-
     
-
-
 
     return res.status(200).json({ message: "Login successful", success: true });
   } catch (error) {
