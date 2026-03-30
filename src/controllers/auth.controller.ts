@@ -1,5 +1,5 @@
 import type { Request, Response } from "express";
-import { LoginRequest } from "../interface/auth.type.js";
+import { LoginRequest, RegisterRequest } from "../types/auth.type.js";
 import User from "../models/user.model.js";
 import bcrypt from "bcrypt";
 import { User as UserType } from "../types/user.types.js";
@@ -66,6 +66,47 @@ export const login = async (
     generateCookie(token, res);
 
     return res.status(200).json({ message: "Login successful", success: true });
+  } catch (error) {
+    return res
+      .status(500)
+      .json({ message: "Internal server error", success: false });
+  }
+};
+
+export const register = async (
+  req: Request<{}, {}, RegisterRequest>,
+  res: Response,
+) => {
+  try {
+    const { userName, email, password } = req.body;
+
+    if (!userName || !email || !password) {
+      return res
+        .status(400)
+        .json({ message: "All fields are required", success: false });
+    }
+
+    const isUserExits = await User.findOne({ email });
+
+    if (isUserExits) {
+      return res
+        .status(400)
+        .json({ message: "User already exists", success: false });
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    const newUser = await User.create({
+      userName,
+      email,
+      password: hashedPassword,
+    });
+
+    const token = generateToken(newUser);
+    generateCookie(token, res);
+    return res
+      .status(201)
+      .json({ message: "User registered successfully", success: true });
   } catch (error) {
     return res
       .status(500)
