@@ -4,6 +4,6 @@ import { isAuth } from "../controllers/auth.controller.js";
 
 const authRoutes = express.Router();
 
-authRoutes.get("/is-auth", userMiddleware, isAuth);
+authRoutes.get("/is-auth", userMiddleware as any, isAuth);
 
 export default authRoutes;

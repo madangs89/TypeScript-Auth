@@ -6,8 +6,8 @@ import { JWT_SECRET } from "../config/cofig.dotenv.js";
 export const userMiddleware = (
   req: AuthRequest,
   res: Response,
-  next: NextFunction
-) => {
+  next: NextFunction,
+): any => {
   try {
     const authHeader = req.headers.authorization;
 
