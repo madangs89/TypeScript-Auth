@@ -1,5 +1,9 @@
 import type { Request, Response } from "express";
-import { LoginRequest, RegisterRequest } from "../types/auth.type.js";
+import {
+  AuthRequest,
+  LoginRequest,
+  RegisterRequest,
+} from "../types/auth.type.js";
 import User from "../models/user.model.js";
 import bcrypt from "bcrypt";
 import { User as UserType } from "../types/user.types.js";
@@ -142,6 +146,47 @@ export const register = async (
     generateCookie(token, res);
     return res.status(201).json({
       message: "User registered successfully",
+      success: true,
+      data: payload,
+    });
+  } catch (error) {
+    return res
+      .status(500)
+      .json({ message: "Internal server error", success: false });
+  }
+};
+
+export const isAuth = async (
+  req: AuthRequest,
+  res: Response<ApiResponse<AuthResponse>>,
+) => {
+  try {
+    if (!req.user) {
+      return res.status(401).json({ message: "Unauthorized", success: false });
+    }
+    const userId = req.user._id;
+
+    if (!userId) {
+      return res.status(401).json({ message: "Unauthorized", success: false });
+    }
+
+    const user = await User.findById(userId).select("-password").lean();
+
+    if (!user) {
+      return res
+        .status(404)
+        .json({ message: "User not found", success: false });
+    }
+
+    const payload = {
+      _id: user._id.toString(),
+      userName: user.userName,
+      email: user.email,
+      role: user.role,
+    };
+
+    return res.status(200).json({
+      message: "User is authenticated",
       success: true,
       data: payload,
     });

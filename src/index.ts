@@ -4,8 +4,12 @@ import { MONGO_URI, PORT } from "./config/cofig.dotenv.js";
 import { connectDb } from "./config/db/db.connect.js";
 import cors from "cors";
 import cookieParser from "cookie-parser";
+
 const app = express();
 
+
+app.use(express.json());
+app.use(cookieParser());
 app.use(
   cors({
     origin: "http://localhost:5173",
@@ -13,8 +17,7 @@ app.use(
     methods: ["GET", "POST", "PUT", "DELETE"],
   }),
 );
-app.use(express.json());
-app.use(cookieParser());
+
 
 app.get("/", (req: Request, res: Response) => {
   res.send("Hello, World!");
