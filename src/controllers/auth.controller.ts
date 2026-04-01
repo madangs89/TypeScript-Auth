@@ -4,13 +4,16 @@ import User from "../models/user.model.js";
 import bcrypt from "bcrypt";
 import { User as UserType } from "../types/user.types.js";
 
+import { z } from "zod";
+
 import jwt from "jsonwebtoken";
 import { JWT_SECRET, NODE_ENV } from "../config/cofig.dotenv.js";
-import { ApiResponse } from "../types/response.type.js";
+import { ApiResponse, AuthResponse } from "../types/response.type.js";
+import { loginSchema, registerSchema } from "../zod/auth.zod.js";
 const generateToken = (data: UserType) => {
   const token = jwt.sign(
     {
-      _id: data._id,
+      _id: data._id.toString(),
       userName: data.userName,
       email: data.email,
       role: data.role,
@@ -34,10 +37,15 @@ const generateCookie = (token: string, res: Response) => {
 
 export const login = async (
   req: Request<{}, {}, LoginRequest>,
-  res: Response<ApiResponse<UserType>>,
+  res: Response<ApiResponse<AuthResponse>>,
 ) => {
   try {
-    const { email, password } = req.body;
+    const result = loginSchema.safeParse(req.body);
+
+    if (!result.success) {
+      return res.status(400).json({ message: "Invalid input", success: false });
+    }
+    const { email, password } = result.data;
     if (!email || !password) {
       return res
         .status(400)
@@ -73,7 +81,7 @@ export const login = async (
     generateCookie(token, res);
 
     const payload = {
-      _id: isUserExits._id,
+      _id: isUserExits._id.toString(),
       userName: isUserExits.userName,
       email: isUserExits.email,
       role: isUserExits.role,
@@ -91,10 +99,15 @@ export const login = async (
 
 export const register = async (
   req: Request<{}, {}, RegisterRequest>,
-  res: Response<ApiResponse<UserType>>,
+  res: Response<ApiResponse<AuthResponse>>,
 ) => {
   try {
-    const { userName, email, password } = req.body;
+    const result = registerSchema.safeParse(req.body);
+
+    if (!result.success) {
+      return res.status(400).json({ message: "Invalid input", success: false });
+    }
+    const { userName, email, password } = result.data;
 
     if (!userName || !email || !password) {
       return res
@@ -119,7 +132,7 @@ export const register = async (
     });
 
     const payload = {
-      _id: newUser._id,
+      _id: newUser._id.toString(),
       userName: newUser.userName,
       email: newUser.email,
       role: newUser.role,

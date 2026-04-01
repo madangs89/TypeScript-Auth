@@ -7,6 +7,7 @@ export type User = {
   role: UserRole;
   password?: string;
 };
+
 export enum UserRole {
   Admin = "admin",
   User = "user",
