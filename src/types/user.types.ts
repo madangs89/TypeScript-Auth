@@ -1,9 +1,11 @@
+import { Types } from "mongoose";
+
 export type User = {
-  _id: string;
+  _id: Types.ObjectId;
   userName: string;
   email: string;
   role: UserRole;
-  password: string;
+  password?: string;
 };
 export enum UserRole {
   Admin = "admin",

@@ -6,6 +6,7 @@ import { User as UserType } from "../types/user.types.js";
 
 import jwt from "jsonwebtoken";
 import { JWT_SECRET, NODE_ENV } from "../config/cofig.dotenv.js";
+import { ApiResponse } from "../types/response.type.js";
 const generateToken = (data: UserType) => {
   const token = jwt.sign(
     {
@@ -33,7 +34,7 @@ const generateCookie = (token: string, res: Response) => {
 
 export const login = async (
   req: Request<{}, {}, LoginRequest>,
-  res: Response,
+  res: Response<ApiResponse<UserType>>,
 ) => {
   try {
     const { email, password } = req.body;
@@ -43,9 +44,15 @@ export const login = async (
         .json({ message: "Email and password are required", success: false });
     }
 
-    const isUserExits = await User.findOne({ email });
+    const isUserExits = await User.findOne({ email }).lean();
 
     if (!isUserExits) {
+      return res
+        .status(404)
+        .json({ message: "Provided Details Are Not Matching", success: false });
+    }
+
+    if (!isUserExits.password) {
       return res
         .status(404)
         .json({ message: "Provided Details Are Not Matching", success: false });
@@ -65,7 +72,16 @@ export const login = async (
     const token = generateToken(isUserExits);
     generateCookie(token, res);
 
-    return res.status(200).json({ message: "Login successful", success: true });
+    const payload = {
+      _id: isUserExits._id,
+      userName: isUserExits.userName,
+      email: isUserExits.email,
+      role: isUserExits.role,
+    };
+
+    return res
+      .status(200)
+      .json({ message: "Login successful", success: true, data: payload });
   } catch (error) {
     return res
       .status(500)
@@ -75,7 +91,7 @@ export const login = async (
 
 export const register = async (
   req: Request<{}, {}, RegisterRequest>,
-  res: Response,
+  res: Response<ApiResponse<UserType>>,
 ) => {
   try {
     const { userName, email, password } = req.body;
@@ -102,11 +118,20 @@ export const register = async (
       password: hashedPassword,
     });
 
+    const payload = {
+      _id: newUser._id,
+      userName: newUser.userName,
+      email: newUser.email,
+      role: newUser.role,
+    };
+
     const token = generateToken(newUser);
     generateCookie(token, res);
-    return res
-      .status(201)
-      .json({ message: "User registered successfully", success: true });
+    return res.status(201).json({
+      message: "User registered successfully",
+      success: true,
+      data: payload,
+    });
   } catch (error) {
     return res
       .status(500)
